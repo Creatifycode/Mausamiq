@@ -8,6 +8,15 @@ judgement through the lens of a chosen persona — a commuter, a farmer, a
 beachgoer, an event planner — so the answer is actionable rather than merely
 numerical.
 
+### Live Deployment
+
+- **Frontend:** [mausamiq.vercel.app](https://mausamiq.vercel.app) — deployed on Vercel.
+- **Backend:** [mausamiq-backend.onrender.com](https://mausamiq-backend.onrender.com/) — deployed on Render.
+- **Production flow:** Vercel frontend → Render backend → Open-Meteo weather and air-quality APIs.
+- The production frontend uses `VITE_API_BASE_URL` to target the deployed Render backend, while local development falls back to `http://localhost:5000` when the variable is unset.
+
+The production deployment is built from the repository's `main` branch.
+
 ---
 
 ## Table of Contents
@@ -340,7 +349,7 @@ The Express server listens on **port 5000** and enables CORS for all origins.
 | --- | --- | --- |
 | `GET` | `/` | Root health check. Returns a status message confirming the service is running. |
 | `GET` | `/api/weather` | Current weather and air quality for a coordinate pair. |
-| `GET` | `/api/weather/forecast` | Daily forecast for a coordinate pair. |
+| `GET` | `/api/weather/forecast` | Daily and upcoming hourly forecast for a coordinate pair. |
 | `GET` | `/api/location` | Geocoding search for a city name. |
 
 ### `GET /api/weather`
