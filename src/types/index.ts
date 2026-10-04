@@ -57,13 +57,18 @@ export interface CurrentWeather {
 }
 
 export interface HourlyForecast {
-  time: string; // e.g. "06:00"
+  time: string; // e.g. "06:00 AM"
   temp: number;
   condition: string;
   rainProbability: number;
-  humidity: number;
-  windSpeed: number;
-  uvIndex: number;
+  /**
+   * Optional because the forecast endpoint only supplies the four fields above —
+   * the hourly widget renders none of these. The curated sample data still sets
+   * them, so both sources satisfy this type without inventing values.
+   */
+  humidity?: number;
+  windSpeed?: number;
+  uvIndex?: number;
 }
 
 export interface DailyForecast {

@@ -1,6 +1,8 @@
-import React from 'react';
-import { Waves, Wind, AlertOctagon, Info } from 'lucide-react';
+import { Flag, Waves, Wind } from 'lucide-react';
 import type { CurrentWeather, PrioritizedWidget } from '../../types';
+import { WidgetShell } from './WidgetShell';
+import { MetricPill } from '../ui/MetricPill';
+import { AdvisoryBox } from '../ui/AdvisoryBox';
 
 interface BeachSurfCardProps {
   currentWeather: CurrentWeather;
@@ -8,71 +10,35 @@ interface BeachSurfCardProps {
   rankNumber: number;
 }
 
-export const BeachSurfCard: React.FC<BeachSurfCardProps> = ({
-  currentWeather,
-  widgetMeta,
-  rankNumber
-}) => {
+export function BeachSurfCard({ currentWeather, widgetMeta, rankNumber }: BeachSurfCardProps) {
   return (
-    <div className="glass-panel widget-card">
-      <div className="widget-header">
-        <div className="widget-title-area">
-          <div className="widget-title-icon" style={{ color: '#06B6D4' }}>
-            <Waves size={20} />
-          </div>
+    <WidgetShell
+      icon={Waves}
+      title="Coastal marine index"
+      subtitle="Swell height, coastal wind and water safety"
+      rankNumber={rankNumber}
+      widgetMeta={widgetMeta}
+      lead={
+        <div className="flag-lead">
+          <span className="flag-lead__icon" aria-hidden="true">
+            <Flag size={17} strokeWidth={2.2} />
+          </span>
           <div>
-            <h3 style={{ fontSize: '1.1rem', color: '#FFF' }}>Beach, Wave & Coastal Marine Index</h3>
-            <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-              Coastal swell height, wind surf rating & water safety flag
-            </p>
+            <p className="flag-lead__label">Lifeguard flag</p>
+            <p className="flag-lead__value">Yellow</p>
           </div>
         </div>
-
-        <span className={`rank-badge ${rankNumber === 1 ? 'top-rank' : ''}`}>
-          Rank #{rankNumber}
-        </span>
+      }
+    >
+      <div className="metric-grid">
+        <MetricPill icon={Waves} label="Estimated swell" value="1.2 m" emphasis />
+        <MetricPill icon={Wind} label="Coastal wind" value={`${currentWeather.windSpeed} km/h`} />
       </div>
 
-      <div className="metrics-grid" style={{ marginBottom: '1rem' }}>
-        <div className="metric-pill">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-            <Waves size={14} color="#06B6D4" />
-            <span className="metric-label">Estimated Swell</span>
-          </div>
-          <span className="metric-value">1.2 Meters</span>
-        </div>
-
-        <div className="metric-pill">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-            <Wind size={14} color="#38BDF8" />
-            <span className="metric-label">Coastal Wind</span>
-          </div>
-          <span className="metric-value">{currentWeather.windSpeed} km/h</span>
-        </div>
-
-        <div className="metric-pill">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-            <AlertOctagon size={14} color="#FBBF24" />
-            <span className="metric-label">Lifeguard Flag</span>
-          </div>
-          <span className="metric-value" style={{ color: '#FBBF24' }}>🟡 Yellow Flag</span>
-        </div>
-      </div>
-
-      <div style={{ background: 'rgba(6, 182, 212, 0.15)', border: '1px solid rgba(6, 182, 212, 0.3)', padding: '0.85rem 1rem', borderRadius: '10px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#67E8F9', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.3rem' }}>
-          <Waves size={16} />
-          <span>Coastal Activity Advisory:</span>
-        </div>
-        <p style={{ fontSize: '0.8rem', color: '#FFF' }}>
-          Moderate swell height allows recreational swimming within marked lifeguard zones. Avoid rip current channels. Water temperature is 28°C.
-        </p>
-      </div>
-
-      <div className="why-badge">
-        <Info size={14} />
-        <span>{widgetMeta.reason}</span>
-      </div>
-    </div>
+      <AdvisoryBox tone="warning" icon={Waves} title="Coastal activity advisory">
+        Moderate swell height allows recreational swimming within marked lifeguard zones. Avoid rip
+        current channels. Water temperature is 28&nbsp;&deg;C.
+      </AdvisoryBox>
+    </WidgetShell>
   );
-};
+}

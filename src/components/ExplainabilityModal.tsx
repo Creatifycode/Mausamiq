@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { X, Cpu, ShieldCheck, Sparkles, ArrowRight } from 'lucide-react';
 import type { PrioritizedWidget, PersonaId } from '../types';
 import { PERSONAS } from '../data/mockData';
@@ -11,6 +11,9 @@ interface ExplainabilityModalProps {
   isSafetyOverrideActive: boolean;
 }
 
+const FOCUSABLE =
+  'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
 export const ExplainabilityModal: React.FC<ExplainabilityModalProps> = ({
   isOpen,
   onClose,
@@ -18,174 +21,238 @@ export const ExplainabilityModal: React.FC<ExplainabilityModalProps> = ({
   activePersonaId,
   isSafetyOverrideActive
 }) => {
+  const cardRef = useRef<HTMLDivElement>(null);
+  const closeRef = useRef<HTMLButtonElement>(null);
+  const previouslyFocused = useRef<HTMLElement | null>(null);
+
+  const activePersona = PERSONAS.find((p) => p.id === activePersonaId) || PERSONAS[0];
+
+  // Move focus into the dialog on open, restore it on close, and lock the
+  // page behind the overlay from scrolling.
+  useEffect(() => {
+    if (!isOpen) return;
+
+    previouslyFocused.current = document.activeElement as HTMLElement | null;
+    closeRef.current?.focus();
+
+    const { overflow } = document.body.style;
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      document.body.style.overflow = overflow;
+      previouslyFocused.current?.focus?.();
+    };
+  }, [isOpen]);
+
+  // Escape to dismiss, Tab cycles within the dialog.
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        onClose();
+        return;
+      }
+
+      if (event.key !== 'Tab' || !cardRef.current) return;
+
+      const nodes = Array.from(cardRef.current.querySelectorAll<HTMLElement>(FOCUSABLE));
+      if (nodes.length === 0) return;
+
+      const first = nodes[0];
+      const last = nodes[nodes.length - 1];
+
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
-  const activePersona = PERSONAS.find(p => p.id === activePersonaId) || PERSONAS[0];
-
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-card" onClick={e => e.stopPropagation()}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-            <div style={{
-              width: '36px',
-              height: '36px',
-              borderRadius: '10px',
-              background: 'linear-gradient(135deg, #3B82F6, #6366F1)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#FFF'
-            }}>
-              <Cpu size={20} />
+    <div className="modal-overlay" role="presentation">
+      {/*
+        Backdrop dismissal is a real button rather than a click handler on a
+        div, so it is reachable by keyboard and exposed to assistive tech.
+        It is a sibling of the dialog, never a parent, so no interactive
+        content ends up nested inside a button.
+      */}
+      <button
+        type="button"
+        className="modal-backdrop"
+        aria-label="Close ranking logic dialog"
+        onClick={onClose}
+      />
+      <div
+        className="modal-card"
+        ref={cardRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="explainability-title"
+      >
+        <div className="modal-header">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', minWidth: 0 }}>
+            <div className="modal-icon" aria-hidden="true">
+              <Cpu size={19} />
             </div>
-            <div>
-              <h3 style={{ fontSize: '1.15rem', color: '#FFF' }}>MausamIQ Ranking Logic</h3>
-              <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                Deterministic Prioritization Matrix & Safety Rules
+            <div style={{ minWidth: 0 }}>
+              <h2 className="modal-title" id="explainability-title">
+                MausamIQ Ranking Logic
+              </h2>
+              <p className="modal-subtitle">
+                Deterministic prioritisation matrix and safety rules
               </p>
             </div>
           </div>
 
           <button
+            type="button"
+            ref={closeRef}
+            className="modal-close"
             onClick={onClose}
-            style={{
-              background: 'rgba(255, 255, 255, 0.1)',
-              border: 'none',
-              color: '#FFF',
-              borderRadius: '8px',
-              width: '32px',
-              height: '32px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer'
-            }}
+            aria-label="Close ranking explanation"
           >
             <X size={18} />
           </button>
         </div>
 
-        {/* Explainability Pipeline Diagram */}
-        <div style={{
-          background: 'rgba(15, 23, 42, 0.7)',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
-          borderRadius: '12px',
-          padding: '1rem',
-          marginBottom: '1.25rem'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#60A5FA', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.6rem' }}>
-            <Sparkles size={16} />
-            <span>Prioritization Pipeline Formula:</span>
+        {/* Prioritisation pipeline */}
+        <div className="glass-panel" style={{ padding: '1rem', marginBottom: '1.25rem' }}>
+          <div className="section-title" style={{ fontSize: '0.85rem', marginBottom: '0.6rem' }}>
+            <Sparkles size={15} className="section-title__icon" aria-hidden="true" />
+            <span>Prioritisation pipeline</span>
           </div>
 
-          <div style={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            alignItems: 'center',
-            gap: '0.5rem',
-            fontSize: '0.78rem',
-            color: '#E2E8F0',
-            background: 'rgba(0, 0, 0, 0.3)',
-            padding: '0.75rem',
-            borderRadius: '8px'
-          }}>
-            <span style={{ color: activePersona.accentColor, fontWeight: 700 }}>Base Persona Weight</span>
-            <span style={{ color: '#9CA3AF' }}>+</span>
-            <span style={{ color: '#F59E0B', fontWeight: 700 }}>Weather Context Boost</span>
-            <span style={{ color: '#9CA3AF' }}>+</span>
-            <span style={{ color: '#EF4444', fontWeight: 700 }}>Safety Override Multiplier</span>
-            <ArrowRight size={14} color="#60A5FA" />
-            <span style={{ background: '#3B82F6', color: '#FFF', padding: '0.15rem 0.4rem', borderRadius: '4px', fontWeight: 700 }}>
-              Final Card Rank
+          <div
+            style={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              alignItems: 'center',
+              gap: '0.5rem',
+              fontSize: '0.78rem',
+              color: 'var(--text-main)',
+              background: 'var(--surface-sunken)',
+              border: '1px solid var(--border-subtle)',
+              borderRadius: '12px',
+              padding: '0.75rem'
+            }}
+          >
+            <span style={{ color: activePersona.accentColor, fontWeight: 700 }}>
+              Base persona weight
+            </span>
+            <span aria-hidden="true" style={{ color: 'var(--text-dim)' }}>+</span>
+            <span style={{ color: 'var(--status-warning-text)', fontWeight: 700 }}>
+              Weather context boost
+            </span>
+            <span aria-hidden="true" style={{ color: 'var(--text-dim)' }}>+</span>
+            <span style={{ color: 'var(--status-danger-text)', fontWeight: 700 }}>
+              Safety override
+            </span>
+            <ArrowRight size={14} className="section-title__icon" aria-hidden="true" />
+            <span
+              style={{
+                background: 'var(--persona-accent-soft)',
+                border: '1px solid var(--persona-accent-line)',
+                color: 'var(--persona-accent-ink)',
+                padding: '0.15rem 0.45rem',
+                borderRadius: '6px',
+                fontWeight: 700
+              }}
+            >
+              Final card rank
             </span>
           </div>
         </div>
 
-        {/* Safety Rule Status */}
-        <div style={{
-          background: isSafetyOverrideActive ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.15)',
-          border: `1px solid ${isSafetyOverrideActive ? 'rgba(239, 68, 68, 0.4)' : 'rgba(16, 185, 129, 0.4)'}`,
-          borderRadius: '10px',
-          padding: '0.85rem 1rem',
-          marginBottom: '1.25rem',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.75rem'
-        }}>
-          <ShieldCheck size={22} color={isSafetyOverrideActive ? '#EF4444' : '#10B981'} />
-          <div>
-            <h4 style={{ fontSize: '0.9rem', color: isSafetyOverrideActive ? '#FCA5A5' : '#6EE7B7' }}>
-              Safety Rule Status: {isSafetyOverrideActive ? 'OVERRIDE ACTIVE' : 'Normal Operational State'}
-            </h4>
-            <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-              {isSafetyOverrideActive 
-                ? 'Severe thunderstorm alert forces emergency warning card to top rank regardless of selected persona.'
-                : 'No severe atmospheric hazard detected. Persona weighting rules apply standard prioritization.'}
+        {/* Safety rule status */}
+        <div
+          className="glass-panel"
+          data-status={isSafetyOverrideActive ? 'danger' : 'optimal'}
+          style={{
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: '0.75rem',
+            padding: '0.9rem 1rem',
+            marginBottom: '1.25rem',
+            borderRadius: '14px',
+            background: isSafetyOverrideActive
+              ? 'var(--status-danger-soft)'
+              : 'var(--status-optimal-soft)',
+            borderColor: isSafetyOverrideActive
+              ? 'var(--status-danger-line)'
+              : 'var(--status-optimal-line)'
+          }}
+        >
+          <ShieldCheck
+            size={21}
+            aria-hidden="true"
+            style={{
+              flexShrink: 0,
+              color: isSafetyOverrideActive
+                ? 'var(--status-danger-text)'
+                : 'var(--status-optimal-text)'
+            }}
+          />
+          <div style={{ minWidth: 0 }}>
+            <h3
+              style={{
+                fontSize: '0.9rem',
+                fontWeight: 700,
+                color: isSafetyOverrideActive
+                  ? 'var(--status-danger-text)'
+                  : 'var(--status-optimal-text)'
+              }}
+            >
+              Safety rule status:{' '}
+              {isSafetyOverrideActive ? 'override active' : 'normal operational state'}
+            </h3>
+            <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+              {isSafetyOverrideActive
+                ? 'A severe thunderstorm alert forces the emergency warning card to rank first regardless of the selected persona.'
+                : 'No severe atmospheric hazard detected. Persona weighting rules apply standard prioritisation.'}
             </p>
           </div>
         </div>
 
-        {/* Current Active Ranking Table */}
-        <h4 style={{ fontSize: '0.95rem', color: '#FFF', marginBottom: '0.75rem' }}>
-          Current Dynamic Card Ranking for "{activePersona.name}" Persona:
-        </h4>
+        <h3 style={{ fontSize: '0.95rem', marginBottom: '0.75rem' }}>
+          Current ranking for &ldquo;{activePersona.name}&rdquo;
+        </h3>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+        <div className="ranking-list">
           {prioritizedWidgets.map((widget, index) => (
-            <div
-              key={widget.id}
-              style={{
-                background: 'rgba(255, 255, 255, 0.04)',
-                border: '1px solid rgba(255, 255, 255, 0.08)',
-                borderRadius: '10px',
-                padding: '0.75rem 1rem',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: '0.75rem'
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <span style={{
-                  width: '26px',
-                  height: '26px',
-                  borderRadius: '50%',
-                  background: index === 0 ? '#F59E0B' : 'rgba(255, 255, 255, 0.1)',
-                  color: index === 0 ? '#000' : '#FFF',
-                  fontWeight: 800,
-                  fontSize: '0.8rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}>
-                  #{index + 1}
+            <div className="ranking-row" key={widget.id}>
+              <div className="ranking-row__main">
+                <span className="ranking-row__rank" data-top={index === 0} aria-hidden="true">
+                  {index + 1}
                 </span>
-                <div>
-                  <h5 style={{ fontSize: '0.88rem', color: '#FFF', fontWeight: 600 }}>{widget.title}</h5>
-                  <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{widget.reason}</p>
+                <div className="ranking-row__body">
+                  <div className="ranking-row__title">{widget.title}</div>
+                  <div className="ranking-row__reason">{widget.reason}</div>
                 </div>
               </div>
 
-              <div style={{ textAlign: 'right' }}>
-                <span style={{
-                  fontSize: '0.8rem',
-                  fontWeight: 700,
-                  color: widget.priorityScore >= 1000 ? '#EF4444' : '#60A5FA',
-                  background: 'rgba(0, 0, 0, 0.3)',
-                  padding: '0.2rem 0.5rem',
-                  borderRadius: '6px'
-                }}>
-                  Score: {widget.priorityScore}
-                </span>
-              </div>
+              <span
+                className="ranking-row__score"
+                data-override={widget.priorityScore >= 1000}
+              >
+                Score {widget.priorityScore}
+              </span>
             </div>
           ))}
         </div>
 
-        <div style={{ marginTop: '1.25rem', textAlign: 'right' }}>
-          <button className="btn-primary" onClick={onClose}>
-            Close Matrix Explanation
+        <div className="modal-footer">
+          <button type="button" className="btn btn--accent" onClick={onClose}>
+            Close
           </button>
         </div>
       </div>

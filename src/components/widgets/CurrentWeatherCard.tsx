@@ -1,20 +1,18 @@
-import React from 'react';
-import { 
-  Sun, 
-  CloudRain, 
-  CloudLightning, 
-  CloudFog, 
-  Thermometer, 
-  Wind, 
-  Droplets, 
-  Eye, 
-  Gauge, 
-  SunMedium, 
-  Sunrise, 
+import {
+  CloudRain,
+  Droplets,
+  Eye,
+  Gauge,
+  Sunrise,
   Sunset,
-  Info 
+  Thermometer,
+  Wind,
 } from 'lucide-react';
 import type { CurrentWeather, PrioritizedWidget } from '../../types';
+import { WidgetShell } from './WidgetShell';
+import { MetricPill } from '../ui/MetricPill';
+import { AdvisoryBox } from '../ui/AdvisoryBox';
+import { getUvBand, getWeatherIcon } from './weatherIcon';
 
 interface CurrentWeatherCardProps {
   weather: CurrentWeather;
@@ -22,145 +20,93 @@ interface CurrentWeatherCardProps {
   rankNumber: number;
 }
 
-export const CurrentWeatherCard: React.FC<CurrentWeatherCardProps> = ({
-  weather,
-  widgetMeta,
-  rankNumber
-}) => {
-  const getWeatherIcon = (condition: string) => {
-    switch (condition) {
-      case 'Thunderstorm':
-        return <CloudLightning size={48} color="#F59E0B" />;
-      case 'Heavy Rain':
-        return <CloudRain size={48} color="#3B82F6" />;
-      case 'Dense Fog':
-        return <CloudFog size={48} color="#9CA3AF" />;
-      default:
-        return <Sun size={48} color="#FBBF24" />;
-    }
-  };
+const UNHEALTHY_AIR = ['Unhealthy for Sensitive Groups', 'Unhealthy', 'Severe'];
+
+export function CurrentWeatherCard({ weather, widgetMeta, rankNumber }: CurrentWeatherCardProps) {
+  const ConditionIcon = getWeatherIcon(weather.condition);
+  const uvBand = getUvBand(weather.uvIndex);
+  const airIsPoor = UNHEALTHY_AIR.includes(weather.aqiCategory);
+
+  const advisory = airIsPoor ? (
+    <AdvisoryBox tone="danger" icon={Gauge} title="Air quality limits outdoor time">
+      AQI {weather.aqi} reads {weather.aqiCategory.toLowerCase()} here. Shorten strenuous outdoor
+      activity and consider an indoor alternative.
+    </AdvisoryBox>
+  ) : weather.uvIndex >= 8 ? (
+    <AdvisoryBox tone="warning" icon={Thermometer} title="High ultraviolet load">
+      UV index {weather.uvIndex} is {uvBand.toLowerCase()}. Shade, sunscreen and midday breaks
+      matter today.
+    </AdvisoryBox>
+  ) : (
+    <AdvisoryBox tone="info" icon={Thermometer} title="Comfortable baseline">
+      AQI {weather.aqi} ({weather.aqiCategory}) and UV {weather.uvIndex} ({uvBand.toLowerCase()}) are
+      within typical ranges.
+    </AdvisoryBox>
+  );
 
   return (
-    <div className="glass-panel widget-card">
-      <div className="widget-header">
-        <div className="widget-title-area">
-          <div className="widget-title-icon">
-            <Thermometer size={20} />
+    <WidgetShell
+      icon={ConditionIcon}
+      title="Current conditions"
+      subtitle={`${weather.city}, ${weather.state}`}
+      rankNumber={rankNumber}
+      widgetMeta={widgetMeta}
+      lead={
+        <div className="current-lead">
+          <div className="current-lead__temp">
+            <span className="current-lead__value">{weather.temp}</span>
+            <span className="current-lead__unit">&deg;C</span>
           </div>
-          <div>
-            <h3 style={{ fontSize: '1.1rem', color: '#FFF' }}>Current Weather Conditions</h3>
-            <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-              {weather.city}, {weather.state} • Updated {weather.lastUpdated}
-            </p>
+          <div className="current-lead__meta">
+            <p className="current-lead__condition">{weather.condition}</p>
+            <p className="current-lead__feels">Feels like {weather.feelsLike}&deg;C</p>
+            <p className="current-lead__stamp">Updated {weather.lastUpdated}</p>
           </div>
         </div>
-
-        <span className={`rank-badge ${rankNumber === 1 ? 'top-rank' : ''}`}>
-          Rank #{rankNumber}
-        </span>
+      }
+      advisory={advisory}
+    >
+      <div className="metric-grid">
+        <MetricPill icon={Droplets} label="Humidity" value={`${weather.humidity}%`} />
+        <MetricPill
+          icon={Wind}
+          label={`Wind ${weather.windDirection}`}
+          value={`${weather.windSpeed} km/h`}
+          tone={weather.windSpeed >= 25 ? 'caution' : 'neutral'}
+        />
+        <MetricPill
+          icon={Thermometer}
+          label="UV index"
+          value={String(weather.uvIndex)}
+          tone={weather.uvIndex >= 8 ? 'warning' : 'neutral'}
+        />
+        <MetricPill
+          icon={Gauge}
+          label="Air quality"
+          value={String(weather.aqi)}
+          tone={airIsPoor ? 'poor' : 'good'}
+        />
+        <MetricPill
+          icon={Eye}
+          label="Visibility"
+          value={`${weather.visibility} km`}
+          tone={weather.visibility < 3 ? 'caution' : 'neutral'}
+        />
+        <MetricPill icon={CloudRain} label="Rain 24h" value={`${weather.rainfall24h} mm`} />
       </div>
 
-      {/* Main Temperature Hero View */}
-      <div style={{
-        display: 'flex',
-        flexWrap: 'wrap',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        background: 'rgba(0, 0, 0, 0.25)',
-        padding: '1.25rem',
-        borderRadius: '14px',
-        gap: '1rem'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
-          {getWeatherIcon(weather.condition)}
-          <div>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem' }}>
-              <span style={{ fontSize: '3rem', fontWeight: 800, fontFamily: 'var(--font-heading)', color: '#FFF' }}>
-                {weather.temp}°C
-              </span>
-              <span style={{ fontSize: '0.95rem', color: 'var(--text-muted)' }}>
-                Feels like {weather.feelsLike}°C
-              </span>
-            </div>
-            <p style={{ fontSize: '1rem', fontWeight: 600, color: '#93C5FD' }}>
-              {weather.condition}
-            </p>
-          </div>
+      <div className="sun-strip">
+        <div className="sun-strip__item">
+          <Sunrise size={14} strokeWidth={2} aria-hidden="true" />
+          <span className="sun-strip__label">Sunrise</span>
+          <span className="sun-strip__value">{weather.sunrise}</span>
         </div>
-
-        <div style={{ display: 'flex', gap: '1.5rem', borderLeft: '1px solid rgba(255, 255, 255, 0.1)', paddingLeft: '1.25rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Sunrise size={20} color="#FBBF24" />
-            <div>
-              <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block' }}>Sunrise</span>
-              <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#FFF' }}>{weather.sunrise}</span>
-            </div>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Sunset size={20} color="#F97316" />
-            <div>
-              <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block' }}>Sunset</span>
-              <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#FFF' }}>{weather.sunset}</span>
-            </div>
-          </div>
+        <div className="sun-strip__item">
+          <Sunset size={14} strokeWidth={2} aria-hidden="true" />
+          <span className="sun-strip__label">Sunset</span>
+          <span className="sun-strip__value">{weather.sunset}</span>
         </div>
       </div>
-
-      {/* Atmospheric Metrics Pills Grid */}
-      <div className="metrics-grid">
-        <div className="metric-pill">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-            <Droplets size={14} color="#60A5FA" />
-            <span className="metric-label">Humidity</span>
-          </div>
-          <span className="metric-value">{weather.humidity}%</span>
-        </div>
-
-        <div className="metric-pill">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-            <Wind size={14} color="#34D399" />
-            <span className="metric-label">Wind Speed</span>
-          </div>
-          <span className="metric-value">{weather.windSpeed} km/h ({weather.windDirection})</span>
-        </div>
-
-        <div className="metric-pill">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-            <SunMedium size={14} color="#FBBF24" />
-            <span className="metric-label">UV Index</span>
-          </div>
-          <span className="metric-value">{weather.uvIndex} ({weather.uvIndex > 8 ? 'Very High' : 'Moderate'})</span>
-        </div>
-
-        <div className="metric-pill">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-            <Gauge size={14} color="#A78BFA" />
-            <span className="metric-label">Air Quality (AQI)</span>
-          </div>
-          <span className="metric-value">{weather.aqi} ({weather.aqiCategory})</span>
-        </div>
-
-        <div className="metric-pill">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-            <Eye size={14} color="#F472B6" />
-            <span className="metric-label">Visibility</span>
-          </div>
-          <span className="metric-value">{weather.visibility} km</span>
-        </div>
-
-        <div className="metric-pill">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-            <CloudRain size={14} color="#38BDF8" />
-            <span className="metric-label">24h Rainfall</span>
-          </div>
-          <span className="metric-value">{weather.rainfall24h} mm</span>
-        </div>
-      </div>
-
-      <div className="why-badge">
-        <Info size={14} />
-        <span>{widgetMeta.reason}</span>
-      </div>
-    </div>
+    </WidgetShell>
   );
-};
+}

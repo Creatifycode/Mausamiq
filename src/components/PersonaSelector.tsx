@@ -1,15 +1,15 @@
 import React from 'react';
-import { 
-  Activity, 
-  Compass, 
-  Car, 
-  Sprout, 
-  Calendar, 
-  HeartPulse, 
-  Waves, 
-  Users, 
-  Zap, 
-  ChevronRight
+import type { CSSProperties } from 'react';
+import {
+  Activity,
+  Compass,
+  Car,
+  Sprout,
+  Calendar,
+  HeartPulse,
+  Waves,
+  Users,
+  Zap
 } from 'lucide-react';
 import { PERSONAS } from '../data/mockData';
 import type { PersonaId } from '../types';
@@ -19,7 +19,7 @@ interface PersonaSelectorProps {
   onSelectPersona: (id: PersonaId) => void;
 }
 
-const ICON_MAP: Record<string, React.FC<{ size?: number; color?: string }>> = {
+const ICON_MAP: Record<string, React.FC<{ size?: number }>> = {
   Activity,
   Compass,
   Car,
@@ -30,90 +30,71 @@ const ICON_MAP: Record<string, React.FC<{ size?: number; color?: string }>> = {
   Users
 };
 
+/**
+ * Persona rail.
+ *
+ * Identical data, ids, labels, icons and selection behaviour as before. The
+ * options are now real <button> elements with aria-pressed, so the rail is
+ * keyboard operable and exposes its selected state to assistive technology.
+ * Each chip carries its own PersonaProfile.accentColor via --chip-accent.
+ */
 export const PersonaSelector: React.FC<PersonaSelectorProps> = ({
   activePersonaId,
   onSelectPersona
 }) => {
-  const activePersona = PERSONAS.find(p => p.id === activePersonaId) || PERSONAS[0];
+  const activePersona = PERSONAS.find((p) => p.id === activePersonaId) || PERSONAS[0];
+  const ActiveIcon = ICON_MAP[activePersona.iconName] || Activity;
 
   return (
-    <section className="persona-section">
-      <div className="section-header">
-        <h2 className="section-title">
-          <Zap size={18} color="#F59E0B" />
-          <span>Select Your Context & Persona</span>
+    <section className="persona-section" aria-labelledby="persona-heading">
+      <div className="section-head">
+        <h2 className="section-title" id="persona-heading">
+          <Zap size={17} className="section-title__icon" aria-hidden="true" />
+          <span>Select your context</span>
         </h2>
-        <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-          Homepage card order adapts dynamically
-        </span>
+        <span className="section-head__hint">Card order adapts to your persona</span>
       </div>
 
-      {/* Horizontal Persona Chips */}
-      <div className="persona-chips">
+      <div className="persona-rail" role="group" aria-label="Weather persona">
         {PERSONAS.map((persona) => {
           const IconComponent = ICON_MAP[persona.iconName] || Activity;
           const isActive = persona.id === activePersonaId;
+          const chipVars = { '--chip-accent': persona.accentColor } as CSSProperties;
 
           return (
-            <div
+            <button
               key={persona.id}
-              className={`persona-chip ${isActive ? 'active' : ''}`}
-              style={{
-               '--accent-color': persona.accentColor,
-               background: isActive ? 'rgba(99, 102, 241, 0.35)' : undefined,
-               border: isActive ? '2px solid #6366F1' : undefined,
-               color: isActive ? '#FFFFFF' : undefined,
-               boxShadow: isActive ? '0 0 12px rgba(99, 102, 241, 0.4)' : undefined
-               } as React.CSSProperties}
-               onClick={() => onSelectPersona(persona.id)}
+              type="button"
+              className="persona-chip"
+              style={chipVars}
+              aria-pressed={isActive}
+              onClick={() => onSelectPersona(persona.id)}
             >
-              <div className="persona-icon-wrapper">
-                <IconComponent size={18} />
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>{persona.name}</span>
-              </div>
-            </div>
+              <span className="persona-chip__icon" aria-hidden="true">
+                <IconComponent size={15} />
+              </span>
+              <span>{persona.name}</span>
+            </button>
           );
         })}
       </div>
 
-      {/* Active Persona Banner Card */}
-      <div className="active-persona-banner" style={{ borderLeft: '4px solid ' + (activePersona.accentColor || '#3B82F6') }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <div style={{
-            width: '36px',
-            height: '36px',
-            borderRadius: '10px',
-            background: (activePersona.accentColor || '#3B82F6') + '25',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: activePersona.accentColor
-          }}>
-            {React.createElement(ICON_MAP[activePersona.iconName] || Activity, { size: 20 })}
-          </div>
-          <div className="persona-banner-info">
-            <h4>Active Persona: {activePersona.name}</h4>
-            <p>{activePersona.tagline}</p>
-          </div>
+      <div className="persona-summary">
+        <div className="persona-summary__icon" aria-hidden="true">
+          <ActiveIcon size={17} />
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <span style={{ 
-            fontSize: '0.75rem', 
-            background: 'rgba(255, 255, 255, 0.08)',
-            padding: '0.3rem 0.6rem',
-            borderRadius: '6px',
-            color: '#93C5FD',
-            display: 'none'
-          }}>
-            Prioritizes: {activePersona.primaryMetrics.slice(0, 2).join(', ')}
-          </span>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.2rem', color: activePersona.accentColor, fontSize: '0.8rem', fontWeight: 600 }}>
-            <span>Adapted View</span>
-            <ChevronRight size={16} />
-          </div>
+        <div className="persona-summary__body">
+          <div className="persona-summary__title">Active persona: {activePersona.name}</div>
+          <div className="persona-summary__tagline">{activePersona.tagline}</div>
+        </div>
+
+        <div className="persona-summary__metrics">
+          {activePersona.primaryMetrics.map((metric) => (
+            <span className="metric-chip" key={metric}>
+              {metric}
+            </span>
+          ))}
         </div>
       </div>
     </section>

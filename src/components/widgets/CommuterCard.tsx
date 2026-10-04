@@ -1,6 +1,8 @@
-import React from 'react';
-import { Car, CloudFog, ShieldCheck, Info } from 'lucide-react';
+import { Car, CloudFog, ShieldCheck } from 'lucide-react';
 import type { CurrentWeather, PrioritizedWidget } from '../../types';
+import { WidgetShell } from './WidgetShell';
+import { StatusPill } from '../ui/StatusPill';
+import { AdvisoryBox } from '../ui/AdvisoryBox';
 
 interface CommuterCardProps {
   currentWeather: CurrentWeather;
@@ -8,75 +10,62 @@ interface CommuterCardProps {
   rankNumber: number;
 }
 
-export const CommuterCard: React.FC<CommuterCardProps> = ({
-  currentWeather,
-  widgetMeta,
-  rankNumber
-}) => {
+export function CommuterCard({ currentWeather, widgetMeta, rankNumber }: CommuterCardProps) {
   const isFog = currentWeather.visibility < 3.0 || currentWeather.condition === 'Dense Fog';
+  const fill = Math.min(100, (currentWeather.visibility / 10) * 100);
 
   return (
-    <div className="glass-panel widget-card">
-      <div className="widget-header">
-        <div className="widget-title-area">
-          <div className="widget-title-icon" style={{ color: '#F59E0B' }}>
-            <Car size={20} />
+    <WidgetShell
+      icon={Car}
+      title="Road hazard index"
+      subtitle="Visibility meter and transit advisory"
+      rankNumber={rankNumber}
+      widgetMeta={widgetMeta}
+      aside={
+        <StatusPill tone={isFog ? 'danger' : 'good'} size="sm">
+          {isFog ? 'Poor visibility' : 'Normal'}
+        </StatusPill>
+      }
+      lead={
+        <div className="meter">
+          <div className="meter__head">
+            <span className="meter__label">Highway visibility</span>
+            <span className="meter__value">{currentWeather.visibility} km</span>
           </div>
-          <div>
-            <h3 style={{ fontSize: '1.1rem', color: '#FFF' }}>Commuter Road Hazard Index</h3>
-            <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-              Visibility meter & transit safety advisory
-            </p>
+          <div
+            className="meter__track"
+            role="meter"
+            aria-valuenow={currentWeather.visibility}
+            aria-valuemin={0}
+            aria-valuemax={10}
+            aria-label={`Highway visibility ${currentWeather.visibility} kilometres of 10`}
+          >
+            <span className={`meter__fill meter__fill--${isFog ? 'danger' : 'good'}`} style={{ width: `${fill}%` }} />
           </div>
         </div>
-
-        <span className={`rank-badge ${rankNumber === 1 ? 'top-rank' : ''}`}>
-          Rank #{rankNumber}
-        </span>
-      </div>
-
-      {/* Visibility Meter Bar */}
-      <div style={{ background: 'rgba(0, 0, 0, 0.25)', padding: '1rem', borderRadius: '12px', marginBottom: '1rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.4rem', fontSize: '0.85rem' }}>
-          <span style={{ color: '#FFF', fontWeight: 600 }}>Highway Road Visibility:</span>
-          <span style={{ color: isFog ? '#EF4444' : '#10B981', fontWeight: 700 }}>
-            {currentWeather.visibility} km ({isFog ? 'POOR VISIBILITY' : 'NORMAL'})
-          </span>
-        </div>
-
-        <div style={{ width: '100%', height: '10px', background: 'rgba(255, 255, 255, 0.1)', borderRadius: '5px', overflow: 'hidden' }}>
-          <div style={{
-            width: `${Math.min(100, (currentWeather.visibility / 10) * 100)}%`,
-            height: '100%',
-            background: isFog ? 'linear-gradient(90deg, #EF4444, #F59E0B)' : 'linear-gradient(90deg, #3B82F6, #10B981)',
-            borderRadius: '5px',
-            transition: 'width 0.5s ease'
-          }} />
-        </div>
-      </div>
-
-      {/* Advisory Note */}
-      <div style={{
-        background: isFog ? 'rgba(239, 68, 68, 0.15)' : 'rgba(59, 130, 246, 0.15)',
-        border: `1px solid ${isFog ? 'rgba(239, 68, 68, 0.4)' : 'rgba(59, 130, 246, 0.4)'}`,
-        padding: '0.85rem 1rem',
-        borderRadius: '10px'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: isFog ? '#FCA5A5' : '#93C5FD', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.3rem' }}>
-          {isFog ? <CloudFog size={16} color="#EF4444" /> : <ShieldCheck size={16} color="#3B82F6" />}
-          <span>Commute Road Advisory:</span>
-        </div>
-        <p style={{ fontSize: '0.8rem', color: '#FFF' }}>
-          {isFog 
-            ? `Dense fog reduces driver reaction time. Maintain low beam headlights and keep a minimum 50m spacing on major expressways.`
-            : 'Road visibility is normal. Evening commute rain risk starts around 05:30 PM.'}
-        </p>
-      </div>
-
-      <div className="why-badge">
-        <Info size={14} />
-        <span>{widgetMeta.reason}</span>
-      </div>
-    </div>
+      }
+      advisory={
+        <AdvisoryBox
+          tone={isFog ? 'danger' : 'info'}
+          icon={isFog ? CloudFog : ShieldCheck}
+          title="Commute advisory"
+        >
+          {isFog ? (
+            <>
+              Dense fog reduces driver reaction time. Maintain low beam headlights and keep a minimum
+              50&nbsp;m spacing on major expressways.
+            </>
+          ) : (
+            <>Road visibility is normal. Evening commute rain risk starts around 05:30&nbsp;PM.</>
+          )}
+        </AdvisoryBox>
+      }
+    >
+      <p className="commuter-note">
+        {isFog
+          ? 'Reaction time degrades sharply below 3 km. Allow extra following distance on signalised junctions.'
+          : 'Clear road network with no active hazard advisories for this corridor.'}
+      </p>
+    </WidgetShell>
   );
-};
+}

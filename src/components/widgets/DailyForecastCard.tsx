@@ -1,85 +1,66 @@
-import React from 'react';
-import { Calendar, CloudRain, Sun, Info } from 'lucide-react';
+import { CloudRain } from 'lucide-react';
+import type { DailyForecast, PrioritizedWidget } from '../../types';
 import { MOCK_DAILY_FORECAST } from '../../data/mockData';
-import type { PrioritizedWidget } from '../../types';
+import { WidgetShell } from './WidgetShell';
+import { getWeatherIcon } from './weatherIcon';
 
 interface DailyForecastCardProps {
   widgetMeta: PrioritizedWidget;
   rankNumber: number;
+  /**
+   * Live daily rows, already normalized by the adapter. Falls back to the
+   * curated sample when the live fetch has not landed or produced nothing.
+   */
+  days?: DailyForecast[] | null;
 }
 
-export const DailyForecastCard: React.FC<DailyForecastCardProps> = ({
+export function DailyForecastCard({
   widgetMeta,
-  rankNumber
-}) => {
+  rankNumber,
+  days: liveDays,
+}: DailyForecastCardProps) {
+  const days = liveDays && liveDays.length > 0 ? liveDays : MOCK_DAILY_FORECAST;
+
+  // Range bar geometry is a view of the existing tempMin/tempMax values.
+  const weekMin = Math.min(...days.map((day) => day.tempMin));
+  const weekMax = Math.max(...days.map((day) => day.tempMax));
+  const span = Math.max(1, weekMax - weekMin);
+
   return (
-    <div className="glass-panel widget-card">
-      <div className="widget-header">
-        <div className="widget-title-area">
-          <div className="widget-title-icon" style={{ color: '#8B5CF6' }}>
-            <Calendar size={20} />
-          </div>
-          <div>
-            <h3 style={{ fontSize: '1.1rem', color: '#FFF' }}>7-Day Official IMD Outlook</h3>
-            <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-              Extended weather outlook & precipitation forecasts
-            </p>
-          </div>
-        </div>
+    <WidgetShell
+      icon={CloudRain}
+      title="7-day forecast"
+      subtitle={`${weekMin}° to ${weekMax}°C across the week`}
+      rankNumber={rankNumber}
+      widgetMeta={widgetMeta}
+    >
+      <div className="day-list" role="list">
+        {days.map((day) => {
+          const Icon = getWeatherIcon(day.condition);
+          const offset = ((day.tempMin - weekMin) / span) * 100;
+          const width = ((day.tempMax - day.tempMin) / span) * 100;
 
-        <span className={`rank-badge ${rankNumber === 1 ? 'top-rank' : ''}`}>
-          Rank #{rankNumber}
-        </span>
-      </div>
-
-      {/* 7-Day List */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-        {MOCK_DAILY_FORECAST.map((day, index) => (
-          <div
-            key={index}
-            style={{
-              background: 'rgba(255, 255, 255, 0.03)',
-              border: '1px solid rgba(255, 255, 255, 0.07)',
-              borderRadius: '10px',
-              padding: '0.75rem 1rem',
-              display: 'flex',
-              flexWrap: 'wrap',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: '0.75rem'
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', minWidth: '130px' }}>
-              {day.rainProbability > 50 ? <CloudRain size={20} color="#3B82F6" /> : <Sun size={20} color="#FBBF24" />}
-              <div>
-                <span style={{ fontSize: '0.9rem', fontWeight: 700, color: '#FFF' }}>{day.day}</span>
-                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>{day.date}</span>
+          return (
+            <div key={day.day} className="day-row" role="listitem" title={day.summary}>
+              <div className="day-row__label">
+                <span className="day-row__day">{day.day}</span>
+                <span className="day-row__date">{day.date}</span>
               </div>
-            </div>
-
-            <div style={{ flex: 1, minWidth: '150px' }}>
-              <span style={{ fontSize: '0.82rem', color: '#93C5FD', fontWeight: 500 }}>{day.condition}</span>
-              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{day.summary}</p>
-            </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.2rem', fontSize: '0.78rem', color: '#60A5FA' }}>
-                <CloudRain size={13} />
-                <span>{day.rainProbability}%</span>
+              <Icon className="day-row__icon" size={16} strokeWidth={1.9} aria-hidden="true" />
+              <span className="day-row__rain">{day.rainProbability}%</span>
+              <span className="day-row__min">{day.tempMin}&deg;</span>
+              <div className="day-row__track">
+                <span
+                  className="day-row__range"
+                  style={{ marginLeft: `${offset}%`, width: `${Math.max(width, 6)}%` }}
+                />
               </div>
-              <div style={{ textAlign: 'right', fontSize: '0.88rem', fontWeight: 700 }}>
-                <span style={{ color: '#FFF' }}>{day.tempMax}°</span>
-                <span style={{ color: 'var(--text-muted)', marginLeft: '0.3rem' }}>{day.tempMin}°</span>
-              </div>
+              <span className="day-row__max">{day.tempMax}&deg;</span>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
-
-      <div className="why-badge">
-        <Info size={14} />
-        <span>{widgetMeta.reason}</span>
-      </div>
-    </div>
+      <p className="day-list__legend">Min and max against the weekly range</p>
+    </WidgetShell>
   );
-};
+}

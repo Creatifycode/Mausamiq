@@ -1,0 +1,1022 @@
+/*
+ * MausamIQ Components
+ * ---------------------------------------------------------------------------
+ * Shared surfaces and shell chrome: glass surface, app bar, controls, persona
+ * rail, hero, score gauge, disclosure, modal.
+ */
+
+/* -----------------------------------------------------------------------
+ * Glass surface primitive
+ * --------------------------------------------------------------------- */
+.glass-panel {
+  position: relative;
+  background: var(--bg-card);
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--elev-2), var(--edge-highlight);
+  transition:
+    border-color var(--dur-base) var(--ease-out),
+    box-shadow var(--dur-base) var(--ease-out),
+    transform var(--dur-base) var(--ease-out);
+}
+
+/* -----------------------------------------------------------------------
+ * Section heading
+ * --------------------------------------------------------------------- */
+.section-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-xs);
+  margin-bottom: var(--space-sm);
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-family: var(--font-display);
+  font-size: var(--text-md);
+  font-weight: 600;
+  letter-spacing: var(--tracking-tight);
+  color: var(--text-h);
+}
+
+.section-title__icon {
+  color: var(--persona-accent);
+  flex-shrink: 0;
+}
+
+.section-head__hint {
+  font-size: var(--text-xs);
+  color: var(--text-dim);
+}
+
+/* =======================================================================
+ * APP BAR
+ * ===================================================================== */
+.app-bar__brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  min-width: 0;
+}
+
+.brand-mark {
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-md);
+  background: linear-gradient(
+    140deg,
+    var(--persona-accent),
+    color-mix(in srgb, var(--persona-accent) 45%, #6d8bff)
+  );
+  box-shadow: 0 4px 16px var(--persona-accent-glow);
+  color: var(--text-on-accent);
+  transition: background var(--dur-slow) var(--ease-out), box-shadow var(--dur-slow) var(--ease-out);
+}
+
+.brand-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.brand-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: 700;
+  letter-spacing: var(--tracking-tight);
+  color: var(--text-h);
+  line-height: 1.1;
+}
+
+.brand-tag {
+  padding: 2px var(--space-2xs);
+  border-radius: var(--radius-xs);
+  background: var(--persona-accent-soft);
+  border: 1px solid var(--persona-accent-line);
+  color: var(--persona-accent-ink);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: var(--tracking-wide);
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.brand-subtitle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3xs);
+  font-size: var(--text-xs);
+  color: var(--text-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.brand-subtitle svg {
+  color: var(--persona-accent);
+  flex-shrink: 0;
+}
+
+/* Hide the tagline on the narrowest screens to keep the bar on one line. */
+@media (max-width: 479px) {
+  .brand-subtitle {
+    display: none;
+  }
+}
+
+/* --- Controls ---------------------------------------------------------- */
+.app-bar__controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.control {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3xs);
+  min-height: var(--tap-target);
+  padding: 0 var(--space-sm);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-glass);
+  transition:
+    background var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out);
+}
+
+.control:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--border-strong);
+}
+
+.control:focus-within {
+  border-color: var(--persona-accent-line);
+}
+
+.control__icon {
+  color: var(--text-dim);
+  flex-shrink: 0;
+}
+
+.control:focus-within .control__icon {
+  color: var(--persona-accent);
+}
+
+/* Native <select>, restyled. Native is kept deliberately: it gives correct
+   keyboard behaviour, screen-reader semantics and a real platform picker
+   on mobile, all of which a custom listbox would have to re-implement. */
+.select-control {
+  appearance: none;
+  -webkit-appearance: none;
+  min-height: calc(var(--tap-target) - 8px);
+  padding: 0 var(--space-lg) 0 0;
+  border: none;
+  background: transparent;
+  color: var(--text-main);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  cursor: pointer;
+  max-width: 100%;
+}
+
+.select-control:focus {
+  outline: none;
+}
+
+.select-control option {
+  background: var(--surface-raised);
+  color: var(--text-main);
+}
+
+.select-chevron {
+  position: absolute;
+  right: var(--space-xs);
+  color: var(--text-dim);
+  pointer-events: none;
+}
+
+.control--select {
+  position: relative;
+  display: inline-flex;
+}
+
+@media (max-width: 899px) {
+  .control--select {
+    flex: 1 1 150px;
+  }
+
+  .select-control {
+    width: 100%;
+  }
+}
+
+/* --- Buttons ----------------------------------------------------------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3xs);
+  min-height: var(--tap-target);
+  padding: 0 var(--space-sm);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-glass);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-main);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  white-space: nowrap;
+  transition:
+    background var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out);
+}
+
+.btn:hover {
+  background: rgba(255, 255, 255, 0.09);
+  border-color: var(--border-strong);
+}
+
+.btn__icon {
+  flex-shrink: 0;
+}
+
+.btn--accent {
+  color: var(--persona-accent-ink);
+  border-color: var(--persona-accent-line);
+  background: var(--persona-accent-soft);
+}
+
+.btn--accent:hover {
+  background: color-mix(in srgb, var(--persona-accent) 22%, transparent);
+  border-color: var(--persona-accent);
+}
+
+/* Safety simulation — the one place a saturated red is justified. */
+.btn--danger {
+  color: var(--status-danger-text);
+  border-color: var(--status-danger-line);
+  background: var(--status-danger-soft);
+}
+
+.btn--danger:hover {
+  background: color-mix(in srgb, var(--status-danger) 22%, transparent);
+  border-color: var(--status-danger);
+}
+
+.btn--danger[data-active='true'] {
+  color: var(--status-optimal-text);
+  border-color: var(--status-optimal-line);
+  background: var(--status-optimal-soft);
+}
+
+.btn--danger[data-active='true']:hover {
+  background: color-mix(in srgb, var(--status-optimal) 22%, transparent);
+  border-color: var(--status-optimal);
+}
+
+/* Neutral secondary action, e.g. dismissing an alert. */
+.btn--ghost {
+  color: var(--text-main);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--border-strong);
+}
+
+/* Compact variant for in-card actions. Still a comfortable touch target. */
+.btn--sm {
+  min-height: 32px;
+  padding: 0 var(--space-xs);
+  font-size: var(--text-xs);
+  border-radius: var(--radius-sm);
+}
+
+/* Compact button labels are dropped first on small screens. */
+@media (max-width: 599px) {
+  .btn__label--optional {
+    display: none;
+  }
+
+  .btn {
+    padding-inline: var(--space-xs);
+  }
+}
+
+/* =======================================================================
+ * PERSONA RAIL
+ * ===================================================================== */
+.persona-section {
+  display: flex;
+  flex-direction: column;
+}
+
+.persona-rail {
+  display: flex;
+  gap: var(--space-xs);
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+  /*
+   * Padding (not negative margins) provides the room for the focus ring, so
+   * the first and last chips are never clipped and the rail box itself never
+   * extends past its container. Scoping stays local to the rail, so this
+   * horizontal scroll never reaches the page.
+   */
+  padding: var(--space-2xs) var(--space-2xs) var(--space-xs);
+  max-width: 100%;
+}
+
+/* Keep the scrollable rail from being widened by its own content. */
+.persona-rail > * {
+  min-width: 0;
+}
+
+.persona-rail::-webkit-scrollbar {
+  display: none;
+}
+
+.persona-chip {
+  position: relative;
+  flex: 0 0 auto;
+  scroll-snap-align: start;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  min-height: var(--tap-target);
+  padding: 0 var(--space-sm);
+  border-radius: var(--radius-lg);
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid var(--border-glass);
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  white-space: nowrap;
+  transition:
+    background var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out),
+    transform var(--dur-fast) var(--ease-out);
+}
+
+.persona-chip:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-main);
+  transform: translateY(-1px);
+}
+
+.persona-chip__icon {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  border-radius: var(--radius-xs);
+  background: rgba(255, 255, 255, 0.07);
+  color: currentColor;
+  transition: background var(--dur-fast) var(--ease-out);
+}
+
+/*
+ * Active state. The accent comes from --chip-accent, injected inline by
+ * <PersonaSelector> from PersonaProfile.accentColor — the existing persona
+ * data, not a new theming system.
+ */
+.persona-chip[aria-pressed='true'] {
+  background: color-mix(in srgb, var(--chip-accent) 20%, transparent);
+  border-color: var(--chip-accent);
+  color: var(--text-h);
+  box-shadow: 0 0 0 1px var(--chip-accent), 0 6px 20px var(--persona-accent-glow);
+}
+
+.persona-chip[aria-pressed='true'] .persona-chip__icon {
+  background: var(--chip-accent);
+  color: var(--text-on-accent);
+}
+
+/* Active persona summary */
+.persona-summary {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-top: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-lg);
+  background: var(--surface-sunken);
+  border: 1px solid var(--border-subtle);
+  border-left: 3px solid var(--persona-accent);
+  min-width: 0;
+}
+
+.persona-summary__icon {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  border-radius: var(--radius-sm);
+  background: var(--persona-accent-soft);
+  color: var(--persona-accent);
+}
+
+.persona-summary__body {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.persona-summary__title {
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--text-h);
+}
+
+.persona-summary__tagline {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+.persona-summary__metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2xs);
+  flex-shrink: 0;
+}
+
+.metric-chip {
+  padding: 3px var(--space-xs);
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-subtle);
+  font-size: var(--text-2xs);
+  font-weight: 600;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+@media (max-width: 767px) {
+  .persona-summary {
+    flex-wrap: wrap;
+  }
+
+  .persona-summary__metrics {
+    width: 100%;
+    padding-left: calc(34px + var(--space-sm));
+  }
+}
+
+/* =======================================================================
+ * HERO — persona intelligence
+ * ===================================================================== */
+.hero {
+  position: relative;
+  overflow: hidden;
+  padding: var(--space-lg);
+  border-radius: var(--radius-2xl);
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--persona-accent) 16%, var(--bg-card)),
+      var(--bg-card) 62%
+    );
+  border: 1px solid var(--persona-accent-line);
+  box-shadow: var(--elev-3), var(--edge-highlight);
+}
+
+/* Single soft highlight, top-right. Static — no looping animation. */
+.hero::after {
+  content: '';
+  position: absolute;
+  top: -40%;
+  right: -12%;
+  width: 60%;
+  height: 160%;
+  pointer-events: none;
+  background: radial-gradient(
+    closest-side,
+    var(--persona-accent-soft),
+    transparent 70%
+  );
+  opacity: 0.85;
+}
+
+.hero > * {
+  position: relative;
+  z-index: 1;
+}
+
+.hero__grid {
+  display: grid;
+  /* minmax(0, 1fr): a bare 1fr would floor this track at min-content width. */
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-lg);
+  align-items: start;
+}
+
+@media (min-width: 860px) {
+  .hero {
+    padding: var(--space-xl);
+  }
+
+  .hero__grid {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: var(--space-xl);
+    align-items: center;
+  }
+}
+
+.hero__eyebrow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3xs);
+  margin-bottom: var(--space-xs);
+}
+
+.hero__identity {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  min-width: 0;
+}
+
+.hero__persona {
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  letter-spacing: var(--tracking-tighter);
+  color: var(--text-h);
+  line-height: 1.1;
+}
+
+.hero__persona em {
+  font-style: normal;
+  color: var(--persona-accent);
+}
+
+.hero__context {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+
+.hero__context strong {
+  color: var(--persona-accent-ink);
+  font-weight: 600;
+}
+
+/* Headline recommendation pulled from SuitabilityMetric.summary */
+.hero__headline {
+  margin-top: var(--space-md);
+  padding: var(--space-md);
+  border-radius: var(--radius-lg);
+  background: var(--surface-sunken);
+  border-left: 3px solid var(--persona-accent);
+  font-size: var(--text-md);
+  font-weight: 600;
+  line-height: var(--leading-snug);
+  color: var(--text-h);
+}
+
+.hero__window {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-xs);
+  margin-top: var(--space-sm);
+  font-size: var(--text-sm);
+  color: var(--persona-accent-ink);
+}
+
+.hero__window svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.hero__window strong {
+  color: var(--text-h);
+  font-weight: 600;
+}
+
+/* Compact supporting metrics — deliberately few, to avoid restating the
+   full current-weather card that still lives in the widget grid. */
+.hero__metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(128px, 1fr));
+  gap: var(--space-xs);
+  margin-top: var(--space-lg);
+}
+
+.hero-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid var(--border-subtle);
+  min-width: 0;
+}
+
+.hero-metric__label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3xs);
+  font-size: var(--text-2xs);
+  font-weight: 600;
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.hero-metric__label svg {
+  flex-shrink: 0;
+  color: var(--persona-accent);
+}
+
+.hero-metric__value {
+  font-family: var(--font-display);
+  font-size: var(--text-md);
+  font-weight: 600;
+  color: var(--text-h);
+  overflow-wrap: anywhere;
+}
+
+/*
+ * Factor chips are impact-coded. The icon carries the same signal as the
+ * colour, so the distinction survives a monochrome or high-contrast render.
+ */
+.hero-metric[data-impact='positive'] {
+  border-color: var(--status-optimal-line);
+}
+
+.hero-metric[data-impact='positive'] .hero-metric__label {
+  color: var(--status-optimal-text);
+}
+
+.hero-metric[data-impact='negative'] {
+  border-color: var(--status-danger-line);
+}
+
+.hero-metric[data-impact='negative'] .hero-metric__label {
+  color: var(--status-danger-text);
+}
+
+.hero-metric[data-impact='neutral'] {
+  border-color: var(--status-warning-line);
+}
+
+.hero-metric[data-impact='neutral'] .hero-metric__label {
+  color: var(--status-warning-text);
+}
+
+/* Factor detail is a sentence, not a number — size it accordingly. */
+.hero-metric__value {
+  font-family: var(--font-sans);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  color: var(--text-muted);
+  line-height: var(--leading-snug);
+}
+
+/* --- Score gauge ------------------------------------------------------- */
+.hero__gauge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-md);
+  border-radius: var(--radius-xl);
+  background: var(--surface-sunken);
+  border: 1px solid var(--border-subtle);
+  min-width: 0;
+}
+
+@media (min-width: 860px) {
+  .hero__gauge {
+    min-width: 220px;
+  }
+}
+
+.hero__gauge-label {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text-h);
+  text-align: center;
+  line-height: var(--leading-snug);
+}
+
+/* =======================================================================
+ * SECONDARY INSIGHTS DISCLOSURE — ranks 7-12
+ *
+ * This is still the existing control that reveals the secondary insights, not
+ * a new dashboard section. It is given enough presence to read as an
+ * intentional part of the widget cluster rather than a thin placeholder bar.
+ * ======================================================================= */
+.insights-disclosure {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2xs);
+  padding: var(--space-md) var(--space-lg);
+  border-radius: var(--radius-xl);
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition:
+    border-color var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) var(--ease-out);
+}
+
+/* Fallback for engines without color-mix(). */
+@supports not (background: color-mix(in srgb, red 50%, transparent)) {
+  .insights-disclosure {
+    background: var(--surface-raised);
+  }
+}
+
+.insights-disclosure:hover {
+  border-color: var(--persona-accent-line);
+}
+
+/* Reuses the shared .eyebrow utility; only the colour is persona-tinted. */
+.insights-disclosure__eyebrow {
+  color: var(--persona-accent-ink);
+}
+
+.insights-disclosure__meta {
+  font-size: var(--text-sm);
+  line-height: var(--leading-snug);
+  color: var(--text-muted);
+  text-align: center;
+  text-wrap: balance;
+}
+
+/*
+ * The control itself. `inline-flex` (rather than the previous full-bleed
+ * `width: 100%`) lets the button hug its label so it reads as a deliberate
+ * action instead of an empty bar. `min-height` still honours --tap-target,
+ * so keyboard and touch targets are unchanged.
+ */
+.disclosure {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  margin-top: var(--space-xs);
+  min-height: var(--tap-target);
+  padding: var(--space-xs) var(--space-lg);
+  border-radius: var(--radius-pill);
+  background: var(--persona-accent-soft);
+  border: 1px solid var(--persona-accent-line);
+  color: var(--text-h);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition:
+    color var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) var(--ease-out);
+}
+
+/* Fallback for engines without color-mix(). */
+@supports not (background: color-mix(in srgb, red 50%, transparent)) {
+  .disclosure {
+    background: rgba(30, 41, 65, 0.78);
+    border-color: var(--border-strong);
+  }
+}
+
+.disclosure:hover {
+  color: var(--text-h);
+  border-color: var(--persona-accent);
+  background: var(--persona-accent-glow);
+}
+
+.disclosure svg {
+  transition: transform var(--dur-base) var(--ease-out);
+}
+
+.disclosure[aria-expanded='true'] svg {
+  transform: rotate(180deg);
+}
+/* =======================================================================
+ * MODAL
+ * ===================================================================== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-md);
+  background: rgba(4, 7, 14, 0.72);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  animation: modal-fade var(--dur-base) var(--ease-out);
+}
+
+/* Invisible full-bleed dismiss layer sitting behind the dialog card. */
+.modal-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: default;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.modal-card {
+  position: relative;
+  width: 100%;
+  max-width: 680px;
+  max-height: 85vh;
+  max-height: 85dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: var(--space-lg);
+  border-radius: var(--radius-xl);
+  background: var(--surface-raised);
+  border: 1px solid var(--border-glass);
+  box-shadow: var(--elev-4);
+  animation: modal-rise var(--dur-base) var(--ease-out);
+}
+
+@media (min-width: 640px) {
+  .modal-card {
+    padding: var(--space-xl);
+  }
+}
+
+@keyframes modal-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes modal-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-md);
+}
+
+.modal-icon {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  border-radius: var(--radius-md);
+  background: var(--persona-accent-soft);
+  border: 1px solid var(--persona-accent-line);
+  color: var(--persona-accent);
+}
+
+.modal-title {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: 700;
+  color: var(--text-h);
+}
+
+.modal-subtitle {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+.modal-close {
+  display: grid;
+  place-items: center;
+  width: var(--tap-target);
+  height: var(--tap-target);
+  flex-shrink: 0;
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-muted);
+  transition:
+    background var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
+}
+
+.modal-close:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--text-h);
+}
+
+/* Ranking table inside the modal */
+.ranking-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.ranking-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-xs);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-subtle);
+}
+
+.ranking-row__main {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-sm);
+  min-width: 0;
+  flex: 1 1 220px;
+}
+
+.ranking-row__rank {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-main);
+  font-size: var(--text-2xs);
+  font-weight: 800;
+}
+
+.ranking-row__rank[data-top='true'] {
+  background: var(--status-warning-soft);
+  border: 1px solid var(--status-warning-line);
+  color: var(--status-warning-text);
+}
+
+.ranking-row__body {
+  min-width: 0;
+}
+
+.ranking-row__title {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text-h);
+}
+
+.ranking-row__reason {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  overflow-wrap: anywhere;
+}
+
+.ranking-row__score {
+  flex-shrink: 0;
+  padding: 3px var(--space-xs);
+  border-radius: var(--radius-xs);
+  background: var(--surface-sunken);
+  border: 1px solid var(--border-subtle);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  color: var(--persona-accent-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.ranking-row__score[data-override='true'] {
+  color: var(--status-danger-text);
+  border-color: var(--status-danger-line);
+  background: var(--status-danger-soft);
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: var(--space-lg);
+}

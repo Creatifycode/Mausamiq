@@ -1,0 +1,258 @@
+/*
+ * MausamIQ Layout
+ * ---------------------------------------------------------------------------
+ * Page shell structure: background field, sticky app bar, responsive content
+ * column, main region and footer. No business logic lives in CSS.
+ */
+
+/* -----------------------------------------------------------------------
+ * Root shell — persona accent is injected inline by <AppShell>
+ * --------------------------------------------------------------------- */
+.app-shell {
+  position: relative;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--surface-base);
+  isolation: isolate;
+  /*
+   * Backstop only. Every overflow source is fixed at its cause below; this just
+   * stops a future long unbreakable string from producing a page-level
+   * horizontal scrollbar.
+   *
+   * `clip` rather than `hidden` on purpose: `hidden` would force the computed
+   * `overflow-y` to `auto`, turning this into a scroll container and breaking
+   * the sticky app bar. `clip` does not create a scroll container.
+   */
+  overflow-x: clip;
+}
+
+/*
+ * Two very low-opacity radial washes establish depth. One carries the
+ * persona accent, one is a cool counter-tone. Deliberately only two, so the
+ * accent stays legible as "this persona's" signal.
+ */
+.app-shell::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      110rem 60rem at 12% -8%,
+      var(--persona-accent-soft),
+      transparent 62%
+    ),
+    radial-gradient(
+      80rem 50rem at 92% 8%,
+      rgba(56, 132, 255, 0.07),
+      transparent 60%
+    );
+}
+
+/* Responsive content column. Replaces the old fixed 1126px #root box. */
+.app-container {
+  width: 100%;
+  max-width: var(--app-max-width);
+  margin-inline: auto;
+  padding-inline: var(--space-md);
+  padding-block: var(--space-lg) var(--space-3xl);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+@media (min-width: 768px) {
+  .app-container {
+    padding-inline: var(--space-xl);
+    padding-block: var(--space-xl) var(--space-4xl);
+    gap: var(--space-xl);
+  }
+}
+
+/* -----------------------------------------------------------------------
+ * Sticky app bar
+ * --------------------------------------------------------------------- */
+.app-bar-shell {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  padding-top: env(safe-area-inset-top, 0px);
+  background: color-mix(in srgb, var(--surface-base) 78%, transparent);
+  backdrop-filter: blur(18px) saturate(150%);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+/*
+ * Fallback for engines without color-mix(): a plain translucent surface.
+ * Declared before the color-mix() value so it is simply overridden.
+ */
+@supports not (background: color-mix(in srgb, red 50%, transparent)) {
+  .app-bar-shell {
+    background: rgba(8, 12, 22, 0.92);
+  }
+}
+
+.app-bar {
+  width: 100%;
+  max-width: var(--app-max-width);
+  margin-inline: auto;
+  padding: var(--space-xs) var(--space-md);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  padding-bottom: calc(var(--space-xs) + env(safe-area-inset-bottom, 0px));
+}
+
+@media (min-width: 768px) {
+  .app-bar {
+    padding-inline: var(--space-xl);
+  }
+}
+
+/* -----------------------------------------------------------------------
+ * Main region
+ * --------------------------------------------------------------------- */
+.page-main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  min-width: 0;
+}
+
+@media (min-width: 768px) {
+  .page-main {
+    gap: var(--space-xl);
+  }
+}
+
+/* -----------------------------------------------------------------------
+ * Bento grid
+ *
+ * Spans are driven by RANK (applied inline by <PrioritizedGrid>), not by
+ * widget category — 9 of the 13 widget configs share the 'smart_persona'
+ * category, so category alone cannot express hierarchy.
+ * --------------------------------------------------------------------- */
+.homepage-grid {
+  display: grid;
+  /*
+   * minmax(0, 1fr) rather than a bare 1fr. A bare `1fr` track has an `auto`
+   * minimum, i.e. min-content, so a single card whose intrinsic width exceeds
+   * the viewport would widen the track and push every card in that column
+   * outside the viewport. An explicit 0 minimum lets each cell shrink.
+   */
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-md);
+  align-items: start;
+}
+
+@media (min-width: 700px) {
+  .homepage-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-lg);
+  }
+}
+
+@media (min-width: 1080px) {
+  .homepage-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* Cells spanning the full row, and rank-1 emphasis spans. */
+.grid-full {
+  grid-column: 1 / -1;
+}
+
+/*
+ * Grid items default to `min-width: auto`, which refuses to shrink below the
+ * card's min-content width and is the other half of the overflow trap above.
+ * Every cell is allowed to shrink; the cards themselves handle their own
+ * internal wrapping and scrolling.
+ */
+.grid-cell,
+.grid-full {
+  min-width: 0;
+}
+
+@media (min-width: 700px) {
+  .grid-span-2 {
+    grid-column: span 2;
+  }
+}
+
+@media (min-width: 1080px) {
+  .grid-span-2 {
+    grid-column: span 2;
+  }
+
+  .grid-span-3 {
+    grid-column: span 3;
+  }
+}
+
+/* -----------------------------------------------------------------------
+ * Widget cluster
+ *
+ * The primary grid, the secondary-insights disclosure and the expanded
+ * secondary grid are ONE visual cluster, not three sibling page sections.
+ * They used to be emitted as bare siblings into `.page-main`, so each one
+ * inherited its `--space-xl` *section* gap — the same gap that separates the
+ * hero from the grid. That is what made the disclosure look adrift and the
+ * page read as disconnected bands.
+ *
+ * Wrapping the cluster at its source gives these three elements one tight,
+ * dedicated rhythm of their own while leaving the real section gaps (persona
+ * rail -> hero -> widgets) untouched. No negative margins are involved, and
+ * the in-grid card gap is unchanged, so cards still never touch.
+ * --------------------------------------------------------------------- */
+.widget-stack {
+  display: flex;
+  flex-direction: column;
+  /*
+   * Deliberately one step tighter than the in-grid card gap (--space-lg), so
+   * the disclosure reads as attached to the cards it extends rather than as a
+   * new band. Still a full step of air, so nothing collides.
+   */
+  gap: var(--space-md);
+}
+
+/* -----------------------------------------------------------------------
+ * Footer
+ * --------------------------------------------------------------------- */
+.app-footer {
+  margin-top: auto;
+  padding: var(--space-lg) var(--space-md) calc(var(--space-lg) + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--border-subtle);
+  background: color-mix(in srgb, var(--surface-sunken) 60%, transparent);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2xs);
+  text-align: center;
+  color: var(--text-dim);
+  font-size: var(--text-xs);
+  line-height: var(--leading-snug);
+}
+
+@supports not (background: color-mix(in srgb, red 50%, transparent)) {
+  .app-footer {
+    background: transparent;
+  }
+}
+
+@media (min-width: 768px) {
+  .app-footer {
+    padding-inline: var(--space-xl);
+  }
+}
+
+.app-footer strong {
+  color: var(--text-muted);
+  font-weight: 600;
+}

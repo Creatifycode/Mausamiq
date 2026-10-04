@@ -1,6 +1,8 @@
-import React from 'react';
-import { Users, Smile, Sun, ShieldCheck, Info } from 'lucide-react';
+import { ShieldCheck, Smile, Sun, Users } from 'lucide-react';
 import type { CurrentWeather, PrioritizedWidget } from '../../types';
+import { WidgetShell } from './WidgetShell';
+import { MetricPill } from '../ui/MetricPill';
+import { AdvisoryBox } from '../ui/AdvisoryBox';
 
 interface FamilyParentCardProps {
   currentWeather: CurrentWeather;
@@ -8,69 +10,64 @@ interface FamilyParentCardProps {
   rankNumber: number;
 }
 
-export const FamilyParentCard: React.FC<FamilyParentCardProps> = ({
-  currentWeather,
-  widgetMeta,
-  rankNumber
-}) => {
+/** Play rating values are unchanged from the original widget. */
+const PLAY_OPTIMAL = { score: 88, label: 'Optimal' };
+const PLAY_HEAT_RISK = { score: 35, label: 'Heat risk' };
+
+export function FamilyParentCard({ currentWeather, widgetMeta, rankNumber }: FamilyParentCardProps) {
   const isTooHot = currentWeather.temp > 35;
+  const play = isTooHot ? PLAY_HEAT_RISK : PLAY_OPTIMAL;
 
   return (
-    <div className="glass-panel widget-card">
-      <div className="widget-header">
-        <div className="widget-title-area">
-          <div className="widget-title-icon" style={{ color: '#F97316' }}>
-            <Users size={20} />
-          </div>
+    <WidgetShell
+      icon={Users}
+      title="Family comfort index"
+      subtitle="Playground safety and child sun mitigation"
+      rankNumber={rankNumber}
+      widgetMeta={widgetMeta}
+      lead={
+        <div className={`score-lead${isTooHot ? ' score-lead--danger' : ' score-lead--good'}`}>
+          <span className="score-lead__icon" aria-hidden="true">
+            <Smile size={18} strokeWidth={2} />
+          </span>
           <div>
-            <h3 style={{ fontSize: '1.1rem', color: '#FFF' }}>Family & Playground Comfort Index</h3>
-            <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-              Kids outdoor play safety, stroller comfort & child sun mitigation
+            <p className="score-lead__label">Kids play rating</p>
+            <p className="score-lead__value">
+              {play.score}
+              <span className="score-lead__unit">/100</span>
+              <span className="score-lead__note">{play.label}</span>
             </p>
           </div>
         </div>
-
-        <span className={`rank-badge ${rankNumber === 1 ? 'top-rank' : ''}`}>
-          Rank #{rankNumber}
-        </span>
+      }
+    >
+      <div className="metric-grid">
+        <MetricPill icon={Sun} label="Stroller comfort" value="Shaded park recommended" />
+        <MetricPill
+          icon={Users}
+          label="Current temp"
+          value={`${currentWeather.temp}°C`}
+          tone={isTooHot ? 'warning' : 'neutral'}
+        />
       </div>
 
-      <div className="metrics-grid" style={{ marginBottom: '1rem' }}>
-        <div className="metric-pill">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-            <Smile size={14} color="#F97316" />
-            <span className="metric-label">Kids Play Rating</span>
-          </div>
-          <span className="metric-value" style={{ color: isTooHot ? '#EF4444' : '#10B981' }}>
-            {isTooHot ? '35 / 100 (Heat Risk)' : '88 / 100 (Optimal)'}
-          </span>
-        </div>
-
-        <div className="metric-pill">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-            <Sun size={14} color="#FBBF24" />
-            <span className="metric-label">Stroller Comfort</span>
-          </div>
-          <span className="metric-value">Shaded Park Recommended</span>
-        </div>
-      </div>
-
-      <div style={{ background: 'rgba(249, 115, 22, 0.15)', border: '1px solid rgba(249, 115, 22, 0.3)', padding: '0.85rem 1rem', borderRadius: '10px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#FFEDD5', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.3rem' }}>
-          <ShieldCheck size={16} />
-          <span>Parent Action Tip:</span>
-        </div>
-        <p style={{ fontSize: '0.8rem', color: '#FFF' }}>
-          {isTooHot 
-            ? 'Midday temperature is too high for young children. Plan park visits before 09:30 AM or after 05:30 PM with water bottles.'
-            : 'Excellent park weather! Apply broad spectrum SPF 30+ sunscreen on kids before outdoor playground activities.'}
-        </p>
-      </div>
-
-      <div className="why-badge">
-        <Info size={14} />
-        <span>{widgetMeta.reason}</span>
-      </div>
-    </div>
+      <AdvisoryBox
+        tone={isTooHot ? 'danger' : 'success'}
+        icon={ShieldCheck}
+        title="Parent action tip"
+      >
+        {isTooHot ? (
+          <>
+            Midday temperature is too high for young children. Plan park visits before 09:30&nbsp;AM
+            or after 05:30&nbsp;PM with water bottles.
+          </>
+        ) : (
+          <>
+            Excellent park weather. Apply broad spectrum SPF 30+ sunscreen on kids before outdoor
+            playground activities.
+          </>
+        )}
+      </AdvisoryBox>
+    </WidgetShell>
   );
-};
+}

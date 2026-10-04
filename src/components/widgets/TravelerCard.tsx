@@ -1,6 +1,9 @@
-import React from 'react';
-import { Compass, Plane, Luggage, MapPin, Info } from 'lucide-react';
+import { Compass, Luggage, MapPin, Plane } from 'lucide-react';
 import type { CurrentWeather, PrioritizedWidget } from '../../types';
+import { WidgetShell } from './WidgetShell';
+import { MetricPill } from '../ui/MetricPill';
+import { AdvisoryBox } from '../ui/AdvisoryBox';
+import { getWeatherIcon } from './weatherIcon';
 
 interface TravelerCardProps {
   currentWeather: CurrentWeather;
@@ -8,71 +11,85 @@ interface TravelerCardProps {
   rankNumber: number;
 }
 
-export const TravelerCard: React.FC<TravelerCardProps> = ({
-  currentWeather,
-  widgetMeta,
-  rankNumber
-}) => {
+/** Shimla remains the hardcoded comparison destination, as in the original widget. */
+const DESTINATION = { city: 'Shimla, HP', temp: 16, condition: 'Partly Cloudy' };
+
+/**
+ * Returns the condition glyph as an element. Declared as a plain helper rather
+ * than a component so the icon is never re-created as a component type during
+ * render.
+ */
+function conditionGlyph(condition: string, size: number) {
+  const Icon = getWeatherIcon(condition);
+  return <Icon size={size} strokeWidth={2} aria-hidden="true" />;
+}
+
+export function TravelerCard({ currentWeather, widgetMeta, rankNumber }: TravelerCardProps) {
+  const delta = currentWeather.temp - DESTINATION.temp;
+  const cooler = delta > 0;
+
   return (
-    <div className="glass-panel widget-card">
-      <div className="widget-header">
-        <div className="widget-title-area">
-          <div className="widget-title-icon" style={{ color: '#3B82F6' }}>
-            <Compass size={20} />
-          </div>
-          <div>
-            <h3 style={{ fontSize: '1.1rem', color: '#FFF' }}>Destination Weather Comparison</h3>
-            <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-              Travel advisory & destination suitability index
-            </p>
-          </div>
+    <WidgetShell
+      icon={Compass}
+      title="Destination comparison"
+      subtitle="Origin against a popular hill destination"
+      rankNumber={rankNumber}
+      widgetMeta={widgetMeta}
+    >
+      <div className="compare">
+        <div className="compare__side">
+          <p className="compare__label">
+            <MapPin size={13} strokeWidth={2} aria-hidden="true" />
+            Origin
+          </p>
+          <p className="compare__city">{currentWeather.city}</p>
+          <p className="compare__temp">
+            {currentWeather.temp}
+            <span className="compare__unit">&deg;C</span>
+          </p>
+          <p className="compare__cond">
+            {conditionGlyph(currentWeather.condition, 14)}
+            {currentWeather.condition}
+          </p>
+          <MetricPill
+            icon={Compass}
+            label="Visibility"
+            value={`${currentWeather.visibility} km`}
+            tone={currentWeather.visibility < 3 ? 'caution' : 'neutral'}
+          />
         </div>
 
-        <span className={`rank-badge ${rankNumber === 1 ? 'top-rank' : ''}`}>
-          Rank #{rankNumber}
-        </span>
-      </div>
-
-      {/* Comparison Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem', marginBottom: '1rem' }}>
-        {/* Current Origin */}
-        <div style={{ background: 'rgba(0, 0, 0, 0.25)', padding: '1rem', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: '#9CA3AF', fontSize: '0.78rem', marginBottom: '0.4rem' }}>
-            <MapPin size={14} color="#60A5FA" />
-            <span>ORIGIN CITY</span>
-          </div>
-          <h4 style={{ fontSize: '1.1rem', color: '#FFF' }}>{currentWeather.city}</h4>
-          <span style={{ fontSize: '1.4rem', fontWeight: 800, color: '#60A5FA' }}>{currentWeather.temp}°C</span>
-          <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{currentWeather.condition} • Visibility {currentWeather.visibility} km</p>
-        </div>
-
-        {/* Destination Shimla */}
-        <div style={{ background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(99, 102, 241, 0.2))', padding: '1rem', borderRadius: '12px', border: '1px solid rgba(59, 130, 246, 0.3)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: '#60A5FA', fontSize: '0.78rem', marginBottom: '0.4rem' }}>
-            <Plane size={14} color="#3B82F6" />
-            <span>POPULAR DESTINATION</span>
-          </div>
-          <h4 style={{ fontSize: '1.1rem', color: '#FFF' }}>Shimla, HP</h4>
-          <span style={{ fontSize: '1.4rem', fontWeight: 800, color: '#34D399' }}>16°C</span>
-          <p style={{ fontSize: '0.8rem', color: '#93C5FD' }}>Partly Cloudy • Ideal Hill Trip Weather</p>
+        <div className="compare__side compare__side--destination">
+          <p className="compare__label">
+            <Plane size={13} strokeWidth={2} aria-hidden="true" />
+            Destination
+          </p>
+          <p className="compare__city">{DESTINATION.city}</p>
+          <p className="compare__temp">
+            {DESTINATION.temp}
+            <span className="compare__unit">&deg;C</span>
+          </p>
+          <p className="compare__cond">
+            {conditionGlyph(DESTINATION.condition, 14)}
+            {DESTINATION.condition}
+          </p>
+          <MetricPill icon={Luggage} label="Hill trip" value="Favourable" tone="good" />
         </div>
       </div>
 
-      {/* Travel Packing Advice */}
-      <div style={{ background: 'rgba(59, 130, 246, 0.1)', padding: '0.75rem 1rem', borderRadius: '10px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#93C5FD', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.3rem' }}>
-          <Luggage size={16} />
-          <span>Traveler Recommendation:</span>
-        </div>
-        <p style={{ fontSize: '0.8rem', color: '#FFF' }}>
-          Shimla temperature is 12°C cooler than {currentWeather.city}. Pack thermal layers, fleece jackets, and comfortable hiking footwear.
-        </p>
-      </div>
-
-      <div className="why-badge">
-        <Info size={14} />
-        <span>{widgetMeta.reason}</span>
-      </div>
-    </div>
+      <AdvisoryBox tone="info" icon={Luggage} title="Packing guidance">
+        {cooler ? (
+          <>
+            Shimla reads {delta}&deg;C cooler than {currentWeather.city}. Pack thermal layers,
+            fleece jackets and comfortable hiking footwear.
+          </>
+        ) : (
+          <>
+            Shimla reads {Math.abs(delta)}&deg;C warmer than {currentWeather.city}. Carry light
+            layers for the journey as hill temperatures swing at altitude.
+          </>
+        )}
+      </AdvisoryBox>
+    </WidgetShell>
   );
-};
+}

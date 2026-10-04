@@ -1,6 +1,9 @@
-import React from 'react';
-import { Clock, Info, CheckCircle2, AlertTriangle, XCircle } from 'lucide-react';
-import type { PrioritizedWidget, PersonaId } from '../../types';
+import { AlertTriangle, CheckCircle2, Clock, Sparkles, XCircle } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
+import type { PersonaId, PrioritizedWidget } from '../../types';
+import { WidgetShell } from './WidgetShell';
+import { StatusPill } from '../ui/StatusPill';
+import type { StatusTone } from '../ui/StatusPill';
 
 interface BestTimeCardProps {
   activePersonaId: PersonaId;
@@ -8,100 +11,104 @@ interface BestTimeCardProps {
   rankNumber: number;
 }
 
-export const BestTimeCard: React.FC<BestTimeCardProps> = ({
-  activePersonaId,
-  widgetMeta,
-  rankNumber
-}) => {
-  const scheduleSlots = [
-    { time: '06:00 AM - 08:00 AM', rating: 'ideal', label: 'Optimal Window', reason: 'Cool temperature, low UV index (1), fresh morning air.' },
-    { time: '08:00 AM - 11:00 AM', rating: 'moderate', label: 'Good Conditions', reason: 'Rising UV (5). Hydration & sun protection advised.' },
-    { time: '11:00 AM - 03:00 PM', rating: 'unfavorable', label: 'High Heat & UV', reason: 'Peak heat (31°C) and UV index (9). Limit direct outdoor exposure.' },
-    { time: '03:00 PM - 06:00 PM', rating: 'moderate', label: 'Rain Chance (60%)', reason: 'Isolated afternoon showers possible. Carry umbrella.' },
-    { time: '06:00 PM - 09:00 PM', rating: 'ideal', label: 'Evening Refresh', reason: 'Pleasant evening breeze (14 km/h), zero UV rays.' }
+interface Slot {
+  time: string;
+  rating: string;
+  label: string;
+  reason: string;
+}
+
+const RATING: Record<string, { tone: StatusTone; icon: LucideIcon }> = {
+  ideal: { tone: 'optimal', icon: CheckCircle2 },
+  moderate: { tone: 'moderate', icon: AlertTriangle },
+};
+
+function ratingMeta(rating: string): { tone: StatusTone; icon: LucideIcon } {
+  return RATING[rating] ?? { tone: 'danger', icon: XCircle };
+}
+
+export function BestTimeCard({ activePersonaId, widgetMeta, rankNumber }: BestTimeCardProps) {
+  // Schedule data is unchanged from the original widget.
+  const scheduleSlots: Slot[] = [
+    {
+      time: '06:00 AM - 08:00 AM',
+      rating: 'ideal',
+      label: 'Optimal Window',
+      reason: 'Cool temperature, low UV index (1), fresh morning air.',
+    },
+    {
+      time: '08:00 AM - 11:00 AM',
+      rating: 'moderate',
+      label: 'Good Conditions',
+      reason: 'Rising UV (5). Hydration & sun protection advised.',
+    },
+    {
+      time: '11:00 AM - 03:00 PM',
+      rating: 'unfavorable',
+      label: 'High Heat & UV',
+      reason: 'Peak heat (31°C) and UV index (9). Limit direct outdoor exposure.',
+    },
+    {
+      time: '03:00 PM - 06:00 PM',
+      rating: 'moderate',
+      label: 'Rain Chance (60%)',
+      reason: 'Isolated afternoon showers possible. Carry umbrella.',
+    },
+    {
+      time: '06:00 PM - 09:00 PM',
+      rating: 'ideal',
+      label: 'Evening Refresh',
+      reason: 'Pleasant evening breeze (14 km/h), zero UV rays.',
+    },
   ];
 
-  const getSlotStyle = (rating: string) => {
-    switch (rating) {
-      case 'ideal':
-        return { bg: 'rgba(16, 185, 129, 0.15)', border: 'rgba(16, 185, 129, 0.4)', text: '#6EE7B7', icon: <CheckCircle2 size={16} color="#10B981" /> };
-      case 'moderate':
-        return { bg: 'rgba(245, 158, 11, 0.15)', border: 'rgba(245, 158, 11, 0.4)', text: '#FBBF24', icon: <AlertTriangle size={16} color="#F59E0B" /> };
-      default:
-        return { bg: 'rgba(239, 68, 68, 0.15)', border: 'rgba(239, 68, 68, 0.4)', text: '#FCA5A5', icon: <XCircle size={16} color="#EF4444" /> };
-    }
-  };
+  // Derived from the slots above, not a new calculation.
+  const idealSlots = scheduleSlots.filter((slot) => slot.rating === 'ideal');
+  const primaryWindow = idealSlots[0];
 
   return (
-    <div className="glass-panel widget-card">
-      <div className="widget-header">
-        <div className="widget-title-area">
-          <div className="widget-title-icon" style={{ color: '#F59E0B' }}>
-            <Clock size={20} />
-          </div>
-          <div>
-            <h3 style={{ fontSize: '1.1rem', color: '#FFF' }}>Best Time Recommendation Schedule</h3>
-            <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-              Hourly suitability distribution optimized for {activePersonaId} profile
-            </p>
-          </div>
-        </div>
-
-        <span className={`rank-badge ${rankNumber === 1 ? 'top-rank' : ''}`}>
-          Rank #{rankNumber}
-        </span>
-      </div>
-
-      {/* Schedule Items */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-        {scheduleSlots.map((slot, index) => {
-          const style = getSlotStyle(slot.rating);
-          return (
-            <div
-              key={index}
-              style={{
-                background: style.bg,
-                border: `1px solid ${style.border}`,
-                borderRadius: '10px',
-                padding: '0.85rem 1rem',
-                display: 'flex',
-                flexWrap: 'wrap',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: '0.75rem'
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                {style.icon}
-                <div>
-                  <span style={{ fontSize: '0.9rem', fontWeight: 700, color: '#FFF' }}>
-                    {slot.time}
-                  </span>
-                  <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                    {slot.reason}
-                  </p>
-                </div>
-              </div>
-
-              <span style={{
-                fontSize: '0.75rem',
-                fontWeight: 700,
-                color: style.text,
-                background: 'rgba(0, 0, 0, 0.3)',
-                padding: '0.25rem 0.6rem',
-                borderRadius: '6px'
-              }}>
-                {slot.label}
-              </span>
+    <WidgetShell
+      icon={Clock}
+      title="Best time windows"
+      subtitle={`Hourly suitability for the ${activePersonaId} profile`}
+      rankNumber={rankNumber}
+      widgetMeta={widgetMeta}
+      lead={
+        primaryWindow ? (
+          <div className="window-lead">
+            <Sparkles className="window-lead__icon" size={15} strokeWidth={2.2} aria-hidden="true" />
+            <div>
+              <p className="window-lead__label">Recommended start</p>
+              <p className="window-lead__value">{primaryWindow.time}</p>
+              <p className="window-lead__note">
+                {idealSlots.length} of {scheduleSlots.length} blocks rated ideal today
+              </p>
             </div>
+          </div>
+        ) : undefined
+      }
+    >
+      <ol className="slot-timeline">
+        {scheduleSlots.map((slot) => {
+          const { tone, icon: Icon } = ratingMeta(slot.rating);
+          return (
+            <li key={slot.time} className={`slot slot--${tone}`}>
+              <span className="slot__marker" aria-hidden="true">
+                <Icon size={15} strokeWidth={2.4} />
+              </span>
+              <div className="slot__body">
+                <div className="slot__head">
+                  <p className="slot__time">{slot.time}</p>
+                  <StatusPill tone={tone} size="sm">
+                    {slot.label}
+                  </StatusPill>
+                </div>
+                <p className="slot__reason">{slot.reason}</p>
+              </div>
+            </li>
           );
         })}
-      </div>
-
-      <div className="why-badge">
-        <Info size={14} />
-        <span>{widgetMeta.reason}</span>
-      </div>
-    </div>
+      </ol>
+    </WidgetShell>
   );
-};
+}
