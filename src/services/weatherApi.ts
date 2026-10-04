@@ -27,8 +27,18 @@
  *   pm25                                         : ug/m3
  *   weatherCode                                  : WMO code
  *   sunrise / sunset                             : local ISO strings, no zone
+ *
+ * API BASE URL — resolved from the Vite environment so the same build of this
+ * client can target either backend:
+ *   production : VITE_API_BASE_URL from `.env.production` -> the Render service
+ *   local dev  : unset, so it falls back to http://localhost:5000
+ *
+ * No secret belongs in that variable. Vite inlines every `VITE_*` value into the
+ * client bundle, so this must stay a public URL. Typed in src/vite-env.d.ts.
  */
-const API_BASE_URL = 'http://localhost:5000';
+const API_BASE_URL = (
+  import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:5000'
+).replace(/\/+$/, '');
 
 /**
  * Raw current-weather payload exactly as the backend returns it.

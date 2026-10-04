@@ -430,9 +430,24 @@ npm install
 
 ### Environment variables
 
-**None are required.** The backend calls Open-Meteo, which is a keyless public
-API, and the frontend's backend base URL is a constant (`src/services/weatherApi.ts`).
-There are no API keys, secrets, or `.env` files to configure.
+**No API keys or secrets are required.** The backend calls Open-Meteo, which is a
+keyless public API.
+
+One optional variable configures which backend the frontend calls:
+
+| Variable | Purpose |
+| --- | --- |
+| `VITE_API_BASE_URL` | Base URL of the MausamIQ backend. |
+
+It is read in `src/services/weatherApi.ts` and typed in `src/vite-env.d.ts`:
+
+- **Production** — `.env.production` sets it to the deployed Render service, so
+  `npm run build` targets `https://mausamiq-backend.onrender.com`.
+- **Local development** — the variable is unset in development mode, so the
+  client falls back to `http://localhost:5000`.
+
+Because Vite inlines every `VITE_*` value into the client bundle, this variable
+can only ever hold a public URL. Never place a secret in a `.env` file.
 
 ---
 
@@ -540,8 +555,6 @@ The following are **possible future directions**, not features that exist today:
   manual city selection.
 - **User-selectable personas,** persisted in local storage.
 - **Server-side caching** for upstream weather and geocoding responses.
-- **Configurable backend URL** via an environment variable, replacing the
-  hardcoded base URL.
 - **Backend test coverage** alongside the existing frontend suites.
 - **Additional locales** beyond the current set of Indian cities.
 
